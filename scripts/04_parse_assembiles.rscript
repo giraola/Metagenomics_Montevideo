@@ -1,0 +1,45 @@
+############################
+# STEP 4: Parse assemblies #
+############################
+
+# /mnt/ubi/goyo/metagenomica/0_scripts
+# To be run from current location
+
+dir1        <- '/mnt/ubi/goyo/metagenomica/1_run_metaphlan2/merged_fastq_files'
+fil1        <- list.files(dir1,pattern='_R1')
+tab1        <- do.call(rbind,strsplit(gsub('_merged_R1.fastq.gz','',fil1),'_'))[,2:3]
+vec1        <- tab1[,1]
+names(vec1) <- tab1[,2]
+
+dir2 <- '/mnt/ubi/goyo/metagenomica/2_assemblies'
+setwd(dir2)
+
+contigs1 <- list.files(pattern='clust.fasta')
+contigs2 <- list.files(pattern='singletons')
+
+library(seqinr)
+
+for (s in 1:length(contigs1)) {
+
+	c1 <- contigs1[s]
+	c2 <- contigs2[s]
+
+	sa <- strsplit(c1,'.',fixed=T)[[1]][3]
+	sn <- names(vec1)[which(vec1==sa)]
+
+	f1 <- read.fasta(c1)
+	f2 <- read.fasta(c2)
+	
+	s1 <- lapply(getSequence(f1),toupper)
+	s2 <- lapply(getSequence(f2),toupper)
+	
+	sq <- c(s1,s2)
+	sl <- length(sq)
+	nm <- paste0('contig_',seq(1,sl),'_',sn)
+
+	write.fasta(sq,names=nm,file=paste0(sn,'.fasta'))
+}
+
+system('rm -rf fasta*')
+
+

@@ -1,0 +1,32 @@
+tars <- list.files('..',pattern='.tar',full.names=T)
+
+for (t in tars) {
+	
+	print('###---###')
+	print(paste('Decompressing file',t))	
+	
+	dir1 <- gsub('../','',gsub('.tar','',t))
+	cmd1 <- paste('tar -xvf',t)
+	system(cmd1,ignore.stdout=T)
+	setwd(dir1)
+
+	r1 <- list.files(pattern='_R1_')
+	r2 <- list.files(pattern='_R2_')	
+
+	c1 <- paste('cat ',paste(r1,collapse=' '),' > ',dir1,'_merged_R1.fastq.gz',sep='') 
+	c2 <- paste('cat ',paste(r2,collapse=' '),' > ',dir1,'_merged_R2.fastq.gz',sep='')
+
+	print(paste('Concatenating R1 lanes from',dir1))
+	system(c1)
+
+	print(paste('Concatenating R2 lanes from',dir1))
+	system(c2)
+
+	print('(Re)moving files...')
+	system('mv *_merged_R*.fastq.gz ../../1_run_metaphlan2/merged_fastq_files/')
+	
+	setwd('../')
+	system(paste('rm -rf',dir1))
+	print('###---###')
+}
+

@@ -1,0 +1,33 @@
+###########################
+# STEP 2: Run Trimmomatic #
+###########################
+
+# /mnt/ubi/goyo/metagenomica/0_scripts
+# To be run from current location
+
+dir     <- '../1_run_metaphlan2/merged_fastq_files/'
+
+system(paste0('mkdir ',dir,'/trimmed'))
+
+fastqs  <- list.files(dir,pattern='fastq.gz')
+samples <- unique(gsub('_merged_R2.fastq.gz','',gsub('_merged_R1.fastq.gz','',fastqs)))
+
+trimmomatic <- 'java -jar /opt/Trimmomatic-0.36/trimmomatic-0.36.jar PE -phred33 -threads 10'
+filters     <- 'LEADING:20 TRAILING:20 SLIDINGWINDOW:5:20 AVGQUAL:20 MINLEN:90'
+
+for (s in samples) {
+	
+	f1 <- paste0(dir,s,'_merged_R1.fastq.gz')
+	f2 <- paste0(dir,s,'_merged_R2.fastq.gz')
+
+	o1p <- paste0(s,'_trimmed_P1.fastq.gz')
+	o2p <- paste0(s,'_trimmed_P2.fastq.gz')
+	o1u <- paste0(s,'_trimmed_U1.fastq.gz')
+	o2u <- paste0(s,'_trimmed_U2.fastq.gz')
+
+	cmd <- paste(trimmomatic,f1,f2,o1p,o1u,o2p,o2u,filters)
+
+	system(cmd)
+}
+
+

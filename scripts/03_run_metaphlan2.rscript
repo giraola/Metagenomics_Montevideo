@@ -1,0 +1,49 @@
+##########################
+# STEP 3: Run Metaphlan2 #
+##########################
+
+# /mnt/ubi/goyo/metagenomica/0_scripts
+# To be run from current location
+# Variables are added into .bashrc
+
+metaphlan <- 'python /mnt/ubi/goyo/programas/metaphlan2/metaphlan2.py'
+
+dir <- '../1_run_metaphlan2/merged_fastq_files/trimmed'
+setwd(dir)
+
+fastqs  <- list.files(pattern='fastq.gz')
+groups  <- split(fastqs,ceiling(seq_along(fastqs)/4))
+
+for (x in 1:length(groups)) {
+
+	sam <- strsplit(groups[[x]][1],'_')[[1]][3]
+	fil <- paste(sam,'.concat.fastq.gz',sep='')
+	fqs <- paste(groups[[x]],collapse=' ')
+	cmd <- paste('cat',fqs,'>',fil)
+	system(cmd)
+	
+	fil2 <- gsub('.gz','',fil)
+	system(paste('gunzip -d',fil))
+
+	out  <- paste(sam,'_profiled_microbiome.txt',sep='')
+	out2 <- paste(sam,'_profiled_microbiome.biom',sep='')
+	cmd2 <- paste(metaphlan,' --input_type fastq --nproc 10 --biom ',out2,
+		      ' --mpa_pkl ${mpa_dir}/db_v20/mpa_v20_m200.pkl',
+		      ' --bowtie2db ${mpa_dir}/db_v20/mpa_v20_m200 ',
+                      fil2,' > ',out,sep='')
+ 
+	system(cmd2)
+	system('rm -rf *.concat.fastq *.fastq.bowtie2out.txt')
+}
+
+
+mergemeta <- 'python /mnt/ubi/goyo/programas/metaphlan2/utils/merge_metaphlan_tables.py'
+results   <- '/mnt/ubi/goyo/metagenomica/1_run_metaphlan2/merged_fastq_files/trimmed'
+profiles  <- paste(results,'*_microbiome.txt',sep='/') 
+
+cmd <- paste(mergemeta,' ',profiles,' > ',results,'/all_samples.merged.out',sep='')
+#system(cmd)
+#system(paste("sed 's/_profiled_microbiome//g' ",results,"/all_samples.merged.out > all_samples_names.merged.out",sep=''))
+
+
+
